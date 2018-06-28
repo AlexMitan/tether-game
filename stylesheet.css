@@ -1,0 +1,17 @@
+#myCanv {
+    background-color: black;
+}
+
+body {
+    background-color: black;
+}
+head {
+
+}
+
+canvas{
+    top: 0px;
+    left: 0px;
+    display: block;
+    position: absolute;
+}

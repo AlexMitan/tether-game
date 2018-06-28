@@ -16,14 +16,14 @@ window.onload = function() {
 
     var anchors = [];
     for (let i=0; i<500; i++) {
-        anchors.push(particle.create(Math.random() * 10000, Math.random() * 10000, // x y
+        anchors.push(new Particle(Math.random() * 10000, Math.random() * 10000, // x y
                                      Math.random() * 3, // speed
                                      Math.random() * 2 * Math.PI, // angle
                                      0)); // gravity
     }
     var zoomies = [];
     for (let i=0; i<100; i++) {
-        zoomies.push(particle.create(Math.random() * 10000, Math.random() * 10000, // x y
+        zoomies.push(new Particle(Math.random() * 10000, Math.random() * 10000, // x y
                                      Math.random() * 1, // speed
                                      Math.random() * 2 * Math.PI, // angle
                                      0)); // gravity
@@ -32,20 +32,20 @@ window.onload = function() {
 
     var nullzones = [];
     for (let i=0; i<100; i++) {
-        nullzones.push(particle.create(Math.random() * 10000, Math.random() * 10000, // x y
+        nullzones.push(new Particle(Math.random() * 10000, Math.random() * 10000, // x y
                                      Math.random() * 1, // speed
                                      Math.random() * 2 * Math.PI, // angle
                                      0)); // gravity
     }
     var powerups = [];
     for (let i=0; i<100; i++) {
-        powerups.push(particle.create(Math.random() * 10000, Math.random() * 10000, // x y
+        powerups.push(new Particle(Math.random() * 10000, Math.random() * 10000, // x y
                                      Math.random() * 2, // speed
                                      Math.random() * 2 * Math.PI, // angle
                                      0)); // gravity
     }
 
-    var player = particle.create(w / 2, h / 2, 5, 0, 0.5);
+    var player = new Particle(w / 2, h / 2, 5, 0, 0.5);
     player.baseGravity = 0;
     player.baseGrappleForce = 2;
     player.baseGrappleRange = 450;

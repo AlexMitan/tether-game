@@ -310,5 +310,11 @@ window.onload = function() {
                 break;
         }
     });
+    $('#paper').touchstart((event) => {
+        leftMouseDown = true;
+    });
+    $('#paper').touchstop((event) => {
+        leftMouseDown = false;
+    });
 
 }

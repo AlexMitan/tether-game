@@ -28,5 +28,6 @@ class Zoomie extends Zone {
 class Nullzone extends Zone {
     onCollidePlayer(){
         this.world.player.forceTowards(this, -0.5);
+        this.world.player.energy -= 1;
     }
 }

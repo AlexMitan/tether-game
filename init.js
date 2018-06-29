@@ -310,11 +310,17 @@ window.onload = function() {
                 break;
         }
     });
-    $('#paper').touchstart((event) => {
+    document.getElementById('paper').addEventListener('touchstart', () => {
         leftMouseDown = true;
-    });
-    $('#paper').touchstop((event) => {
+    })
+    document.getElementById('paper').addEventListener('touchstop', () => {
         leftMouseDown = false;
-    });
+    })
+    // $('#paper').touchstart((event) => {
+    //     leftMouseDown = true;
+    // });
+    // $('#paper').touchstop((event) => {
+    //     leftMouseDown = false;
+    // });
 
 }

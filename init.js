@@ -13,47 +13,59 @@ window.onload = function() {
     ctx.fillStyle = "white";
     ctx.lineWidth = 1;
     
+    class Player extends Particle {
+        constructor(world, x, y, grav) {
+            super(x, y, 0, 0, grav);
+            this.baseGravity = grav;
+            this.baseGrappleForce = 2;
+            this.baseGrappleRange = 450;
+            this.attackTimer = 0;
+            this.attackCooldown = 20;
+            this.energy = 100;
+            this.maxEnergy = 100;
+            this.grapplePoint = null;
+            this.world = world;
+        }
 
+        update() {
+            super.update();
+        }
+    }
+    var world = new World();
+    var player = new Player(world, 5000, 5000, 0);
+    world.player = player;
+    
     var anchors = [];
     for (let i=0; i<500; i++) {
-        anchors.push(new Particle(Math.random() * 10000, Math.random() * 10000, // x y
+        anchors.push(new Zone(world, Math.random() * 10000, Math.random() * 10000, // x y
                                      Math.random() * 3, // speed
                                      Math.random() * 2 * Math.PI, // angle
                                      0)); // gravity
     }
     var zoomies = [];
     for (let i=0; i<100; i++) {
-        zoomies.push(new Particle(Math.random() * 10000, Math.random() * 10000, // x y
+        zoomies.push(new Zoomie(world, Math.random() * 10000, Math.random() * 10000, // x y
                                      Math.random() * 1, // speed
                                      Math.random() * 2 * Math.PI, // angle
-                                     0)); // gravity
+                                     0, randomInt(60, 150))); // gravity, radius
         zoomies[i].active = false;
     }
 
     var nullzones = [];
     for (let i=0; i<100; i++) {
-        nullzones.push(new Particle(Math.random() * 10000, Math.random() * 10000, // x y
+        nullzones.push(new Nullzone(world, Math.random() * 10000, Math.random() * 10000, // x y
                                      Math.random() * 1, // speed
                                      Math.random() * 2 * Math.PI, // angle
-                                     0)); // gravity
+                                     0, randomInt(200, 250))); // gravity, radius
     }
     var powerups = [];
     for (let i=0; i<100; i++) {
-        powerups.push(new Particle(Math.random() * 10000, Math.random() * 10000, // x y
+        powerups.push(new Zone(world, Math.random() * 10000, Math.random() * 10000, // x y
                                      Math.random() * 2, // speed
                                      Math.random() * 2 * Math.PI, // angle
                                      0)); // gravity
     }
 
-    var player = new Particle(w / 2, h / 2, 5, 0, 0.5);
-    player.baseGravity = 0;
-    player.baseGrappleForce = 2;
-    player.baseGrappleRange = 450;
-    player.attackTimer = 0;
-    player.attackCooldown = 20;
-    player.energy = 100;
-    player.maxEnergy = 100;
-    var grapplePoint = null;
     
     function update() {
         ctx.clearRect(0, 0, w, h);
@@ -94,27 +106,10 @@ window.onload = function() {
         }
         // nullzone mechanic
         for (let nullzone of nullzones) {
-            if (player.distTo(nullzone) < 200) {
-                player.gravity = 0;
-                player.vx *= 0.95;
-                player.vy *= 0.95;
-                // grappleForce = 20;
-                // player.gravitateTo(nullzone);
-                grappleRange = 900;
-            }
+            nullzone.update();
         }
-        // zoomie mechanic
-        for (let zoomie of zoomies) {
-            if (player.distTo(zoomie) < 100) {
-                // player.vy = -Math.abs(player.vy);
-                // player.vy = Math.min(-Math.abs(player.vy), -20);
-                player.setSpeed(player.getSpeed() + 3);
-                zoomie.active = true;
-            }
-        }
-
         // thrust mecanic
-        if (player.energy >= 0){
+        if (player.energy >= 5){
             if (keysDown['w']) {
                 player.vy -= 0.5;
                 player.energy -= 1;
@@ -132,37 +127,36 @@ window.onload = function() {
                 player.energy -= 1;
             }
         }
-        console.log(player.energy);
         player.energy = clamp(player.energy + 0.25, 0, player.maxEnergy);
         
         // grapple mechanic 
         // invalidate grapple if too far
-        if (grapplePoint !== null && player.distTo(grapplePoint) > grappleRange) {
-            grapplePoint = null;
+        if (player.grapplePoint !== null && player.distTo(player.grapplePoint) > grappleRange) {
+            player.grapplePoint = null;
         }
         if (leftMouseDown){
             var nearestDist = player.distTo(closestAnchor);
-            if (grapplePoint === null && nearestDist < grappleRange) {
-                grapplePoint = closestAnchor;
+            if (player.grapplePoint === null && nearestDist < grappleRange) {
+                player.grapplePoint = closestAnchor;
                 var grappleDist = nearestDist;
             }
-            if (grapplePoint !== null) {
-                var grappleDist = player.distTo(grapplePoint);
+            if (player.grapplePoint !== null) {
+                var grappleDist = player.distTo(player.grapplePoint);
             }
             if (grappleDist < grappleRange) {
                 // towards
                 if (grappleDist > 30){
-                    player.forceTowards(grapplePoint, grappleDist > 30 ? grappleForce : -grappleForce);
+                    player.forceTowards(player.grapplePoint, grappleDist > 30 ? grappleForce : -grappleForce);
                 } else {
-                    player.vx = (player.vx * 3 + grapplePoint.vx) / 4;
-                    player.vy = (player.vy * 3 + grapplePoint.vy) / 4;
+                    player.vx = (player.vx * 3 + player.grapplePoint.vx) / 4;
+                    player.vy = (player.vy * 3 + player.grapplePoint.vy) / 4;
                 }
                 player.forceTowards(mouseP, clamp(grappleRange / grappleDist / 5, 0, 3));
                 player.setSpeed(Math.min(player.getSpeed(), 20));
             }
         } else {
             // release on mouse down
-            grapplePoint = null; 
+            player.grapplePoint = null; 
         }
 
         // player.vy *= 0.9;
@@ -185,18 +179,18 @@ window.onload = function() {
         // range
         bub.markP(player, 'cyan', grappleRange);
         // grapple tether
-        if (grapplePoint !== null){
-            var cpX = player.x + player.vx * 4 + (grapplePoint.x - player.x) / 2;
-            var cpY = player.y + player.vy * 4 + (grapplePoint.y - player.y) / 2;
+        if (player.grapplePoint !== null){
+            var cpX = player.x + player.vx * 4 + (player.grapplePoint.x - player.x) / 2;
+            var cpY = player.y + player.vy * 4 + (player.grapplePoint.y - player.y) / 2;
             ctx.save();
             ctx.beginPath();
             // ctx.lineWidth = grappleForce / 3;
             ctx.moveTo(player.x, player.y);
-            ctx.quadraticCurveTo(cpX, cpY, grapplePoint.x, grapplePoint.y);
+            ctx.quadraticCurveTo(cpX, cpY, player.grapplePoint.x, player.grapplePoint.y);
             ctx.stroke();
             ctx.restore();
             // direct
-            // bub.lineP(player, grapplePoint);
+            // bub.lineP(player, player.grapplePoint);
         }
         // player
         bub.markP(player, 'blue', 10);
@@ -205,17 +199,22 @@ window.onload = function() {
             bub.markP(p, 'green', 5);
         }
         for (let p of zoomies) {
-            bub.markP(p, 'yellow', p.active ? 120 : 100);
-            p.active = false; // hack
+            bub.markP(p, 'yellow', p.active ? p.radius + 20 : p.radius);
+            // p.active = false; // hack
+            p.update();
         }
         for (let p of nullzones) {
-            bub.markP(p, 'purple', 200);
+            bub.markP(p, 'purple', p.radius);
         }
         for (let p of powerups) {
             bub.diamond(p.x, p.y, 40);
         }
 
         frames++;
+        if (frames < 150) {
+            ctx.fillText("WASD to move (uses energy)", player.x - 50, player.y - 50); 
+            ctx.fillText("Mouse click and move to tether", player.x - 50, player.y + 50); 
+        }
         ctx.restore();
         setTimeout(update, 1000/30);
     }
@@ -228,10 +227,10 @@ window.onload = function() {
         mRX = mX / w;
         mRY = mY / h;
     });
-    $('#paper').keydown(function(event) {
-        console.log('pressed code ' + event);
-        leftMouseDown = true;
-    });
+    // $('#paper').keydown(function(event) {
+    //     console.log('pressed code ' + event);
+    //     leftMouseDown = true;
+    // });
     $('#paper').mousedown((event) => {
         switch (event.which) {
             case 1:
@@ -253,7 +252,7 @@ window.onload = function() {
     //     console.log(e)
     // });
     $(document.body).keydown(function(e) {
-        console.log(e.which);
+        // console.log(e.which);
         // 87 w
         // 65 a
         // 83 s 
@@ -274,7 +273,7 @@ window.onload = function() {
         }
     });
     $(document.body).keyup(function(e) {
-        console.log(e.which);
+        // console.log(e.which);
         // 87 w
         // 65 a
         // 83 s 

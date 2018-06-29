@@ -66,13 +66,18 @@ window.onload = function() {
                                      0)); // gravity
     }
 
-    
+    var mouseP = lastmouseP = {x:0, y:0};
     function update() {
         ctx.clearRect(0, 0, w, h);
-        var mouseP = {x: mX + player.x - w/2, y: mY + player.y - h/2};
-        
         ctx.save();
         ctx.translate(-player.x + w/2, -player.y + h/2);
+
+        // mouse vel
+        lastmouseP = mouseP;
+        mouseP = {x: mX + player.x - w/2, y: mY + player.y - h/2};
+        var mvx = mouseP.x - lastmouseP.x - player.vx;
+        var mvy = mouseP.y - lastmouseP.y - player.vy;
+
         // find closest point
         var closestAnchor = anchors[0];
         var smallestDist = distP(mouseP, closestAnchor);
@@ -145,13 +150,17 @@ window.onload = function() {
             }
             if (grappleDist < grappleRange) {
                 // towards
+                let f = lerp(grappleDist / grappleRange, -grappleForce/10, grappleForce);
+                player.forceTowards(player.grapplePoint, f);
+                // player.forceTowards(player.grapplePoint, grappleDist > 30 ? grappleForce : -grappleForce/2);
                 if (grappleDist > 30){
-                    player.forceTowards(player.grapplePoint, grappleDist > 30 ? grappleForce : -grappleForce);
+                    player.vx += clamp(mvx / 10, -2, 2);
+                    player.vy += clamp(mvy / 10, -2, 2);
                 } else {
-                    player.vx = (player.vx * 3 + player.grapplePoint.vx) / 4;
-                    player.vy = (player.vy * 3 + player.grapplePoint.vy) / 4;
+                    // player.vx = (player.vx * 3 + player.grapplePoint.vx) / 4;
+                    // player.vy = (player.vy * 3 + player.grapplePoint.vy) / 4;
                 }
-                player.forceTowards(mouseP, clamp(grappleRange / grappleDist / 5, 0, 3));
+                // player.forceTowards(mouseP, clamp(grappleRange / grappleDist / 5, 0, 3));
                 player.setSpeed(Math.min(player.getSpeed(), 20));
             }
         } else {
@@ -209,6 +218,12 @@ window.onload = function() {
         for (let p of powerups) {
             bub.diamond(p.x, p.y, 40);
         }
+        // mouse vel
+        ctx.save();
+        ctx.moveTo(mouseP.x, mouseP.y);
+        ctx.lineTo(mouseP.x - mvx, mouseP.y - mvy);
+        ctx.stroke();
+        ctx.restore();
 
         frames++;
         if (frames < 150) {
@@ -227,10 +242,6 @@ window.onload = function() {
         mRX = mX / w;
         mRY = mY / h;
     });
-    // $('#paper').keydown(function(event) {
-    //     console.log('pressed code ' + event);
-    //     leftMouseDown = true;
-    // });
     $('#paper').mousedown((event) => {
         switch (event.which) {
             case 1:
@@ -248,15 +259,7 @@ window.onload = function() {
                 break;
         }
     });
-    // document.getElementById('paper').addEventListener('keydown', (e) => {
-    //     console.log(e)
-    // });
     $(document.body).keydown(function(e) {
-        // console.log(e.which);
-        // 87 w
-        // 65 a
-        // 83 s 
-        // 68 d
         switch (e.which) {
             case 87: // w
                 keysDown['w'] = true;
